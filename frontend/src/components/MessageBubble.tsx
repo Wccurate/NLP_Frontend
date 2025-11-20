@@ -1,84 +1,83 @@
-import type { FC, ReactNode } from 'react'
-import type { UiMessage } from '../types'
-import { IntentBadge } from './IntentBadge'
-import { FileBadge } from './FileBadge'
-import { SourceList } from './SourceList'
+import { motion } from 'framer-motion'
+import { UserCircleIcon, ComputerDesktopIcon } from '@heroicons/react/24/outline'
 import { MarkdownContent } from './MarkdownContent'
+import { SourceList } from './SourceList'
+import { FileBadge } from './FileBadge'
+import { IntentBadge } from './IntentBadge'
+import type { UiMessage } from '../types'
+import { cn } from '../lib/utils'
 
-export interface MessageBubbleProps {
+interface MessageBubbleProps {
   message: UiMessage
-  children?: ReactNode
 }
 
-const roleLabel: Record<UiMessage['role'], string> = {
-  user: 'User',
-  assistant: 'Assistant',
-}
-
-export const MessageBubble: FC<MessageBubbleProps> = ({
-  message,
-  children,
-}) => {
+export function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === 'user'
-  const alignment = isUser ? 'justify-end text-right' : 'justify-start text-left'
-  const bubbleColor = isUser
-    ? 'bg-blue-600 text-white'
-    : 'bg-white text-slate-800 border border-slate-200'
 
   return (
-    <div className={`flex w-full ${alignment}`}>
-      <div className={`max-w-2xl rounded-2xl px-4 py-3 shadow-sm ${bubbleColor}`}>
-        <div
-          className={`mb-2 flex flex-wrap items-center ${isUser ? 'justify-end gap-2' : 'gap-2'}`}
-        >
-          <span
-            className={`text-xs font-semibold uppercase tracking-wide ${isUser ? 'text-white/80' : 'text-slate-500/80'
-              }`}
-          >
-            {roleLabel[message.role]}
-          </span>
-          <IntentBadge
-            intent={message.intent}
-            className={isUser ? 'ml-auto bg-white/20 text-white border-white/30' : ''}
-          />
-          {message.hasFile ? (
-            <FileBadge
-              className={isUser ? 'ml-auto bg-white/20 text-white' : ''}
-            />
-          ) : null}
+    <motion.div
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+      className={cn(
+        'flex w-full gap-4',
+        isUser ? 'justify-end' : 'justify-start'
+      )}
+    >
+      {!isUser && (
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 backdrop-blur-md border border-white/20 shadow-sm">
+          <ComputerDesktopIcon className="h-5 w-5 text-blue-200" />
         </div>
-        {message.displayText ? (
-          message.role === 'assistant' ? (
-            <MarkdownContent content={message.displayText} />
-          ) : (
-            <p className="whitespace-pre-line text-sm leading-relaxed">
-              {message.displayText}
-            </p>
-          )
-        ) : (
-          <p className="italic text-sm opacity-70">No visible text</p>
+      )}
+
+      <div
+        className={cn(
+          'relative max-w-[85%] rounded-2xl px-5 py-4 shadow-sm backdrop-blur-md transition-all',
+          isUser
+            ? 'bg-blue-500/80 text-white border border-blue-400/30 rounded-tr-sm'
+            : 'bg-white/10 text-slate-100 border border-white/10 rounded-tl-sm'
         )}
-        {children}
-        {message.sources?.length ? (
-          <details open className={`mt-3 ${isUser ? 'text-left' : ''}`}>
-            <summary className="cursor-pointer select-none text-sm font-semibold text-slate-700">
-              Sources
-            </summary>
-            <div className="mt-3">
-              <SourceList sources={message.sources} />
-            </div>
-          </details>
-        ) : null}
-        {message.toolCalls?.length ? (
-          <div
-            className={`mt-3 rounded-lg bg-slate-100 px-3 py-2 text-xs font-medium text-slate-700 ${isUser ? 'text-left' : ''
-              }`}
-          >
-            <span className="mr-1 font-semibold">Tool calls:</span>
-            {message.toolCalls.join(', ')}
+      >
+        {/* Header info */}
+        <div className="mb-2 flex flex-wrap items-center gap-2 text-xs opacity-80">
+          <span className="font-medium">
+            {isUser ? 'You' : 'Assistant'}
+          </span>
+          <span className="text-[10px] opacity-60">
+            {new Date(message.timestamp ?? Date.now()).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </span>
+          {message.intent && <IntentBadge intent={message.intent} />}
+        </div>
+
+        {/* File attachment */}
+        {message.hasFile && (
+          <div className="mb-3">
+            <FileBadge />
           </div>
-        ) : null}
+        )}
+
+        {/* Content */}
+        <div className={cn('prose prose-sm max-w-none break-words', isUser ? 'prose-invert' : 'prose-invert')}>
+          <MarkdownContent content={message.displayText} />
+        </div>
+
+        {/* Sources (Assistant only) */}
+        {!isUser && message.sources && message.sources.length > 0 && (
+          <div className="mt-4 border-t border-white/10 pt-3">
+            <p className="mb-2 text-xs font-medium text-slate-300">Sources</p>
+            <SourceList sources={message.sources} />
+          </div>
+        )}
       </div>
-    </div>
+
+      {isUser && (
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-500/20 backdrop-blur-md border border-blue-400/30">
+          <UserCircleIcon className="h-5 w-5 text-blue-200" />
+        </div>
+      )}
+    </motion.div>
   )
 }

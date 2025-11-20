@@ -1,28 +1,32 @@
-import type { FC, ReactNode } from 'react'
+import { XCircleIcon, XMarkIcon } from '@heroicons/react/24/solid'
+import { motion, AnimatePresence } from 'framer-motion'
 
-export interface ErrorBannerProps {
-  message: ReactNode
+interface ErrorBannerProps {
+  message: string
   onClose?: () => void
 }
 
-export const ErrorBanner: FC<ErrorBannerProps> = ({ message, onClose }) => {
-  if (!message) {
-    return null
-  }
-
+export function ErrorBanner({ message, onClose }: ErrorBannerProps) {
   return (
-    <div className="mb-4 flex items-start justify-between rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
-      <div>{message}</div>
-      {onClose ? (
-        <button
-          type="button"
-          aria-label="Dismiss error"
-          className="ml-4 rounded border border-red-200 bg-white px-2 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-100"
-          onClick={onClose}
-        >
-          Dismiss
-        </button>
-      ) : null}
-    </div>
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0, y: -20, scale: 0.9 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: -20, scale: 0.9 }}
+        className="relative mb-4 flex items-center gap-3 rounded-xl bg-red-500/10 border border-red-500/20 p-4 text-red-200 backdrop-blur-md shadow-lg"
+      >
+        <XCircleIcon className="h-5 w-5 shrink-0 text-red-400" />
+        <p className="flex-1 text-sm font-medium">{message}</p>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="rounded-lg p-1 text-red-400 hover:bg-red-500/20 transition-colors"
+            aria-label="Dismiss error"
+          >
+            <XMarkIcon className="h-5 w-5" />
+          </button>
+        )}
+      </motion.div>
+    </AnimatePresence>
   )
 }
